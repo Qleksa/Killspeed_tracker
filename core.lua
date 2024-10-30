@@ -1,8 +1,11 @@
 -- GetSubZoneText() returns the name of the subzone the player is in, react on ZONE_CHANGED event
 -- 
+
+-- KillspeedTrackerDB = KillspeedTrackerDB or {}
+
 local function initializeDB()
-    KillspeedTrackedDB = {
-        FirelandsBosses = {
+    KillspeedTrackerDB = {
+        [720] = {
             [52409] = "Ragnaros",
             [52530] = "Alysrazor",
             [53691] = "Shannox",
@@ -11,22 +14,11 @@ local function initializeDB()
             [52571] = "Majordomo Staghelm",
             [53494] = "Baleroc",
         },
-        FirelandsBossSubZones = {
-            ["Sulfuron Keep"] = 52409, -- Ragnaros
-            ["Path of the Phoenix"] = 52530, -- Alysrazor
-            ["Ridge of the Ember Lord"] = 53691, -- Shannox
-            ["The Scorched Plain"] = 52558, -- Lord Rhyolith
-            ["Beth'tilac's Lair"] = 52498, -- Beth'tilac
-            ["Forge of Flames"] = 52571, -- Majordomo Staghelm
-            ["Bridge of Flame"] = 53494, -- Baleroc
-        }
     }
 end
 
 
-if not KillspeedTrackerDB then
-    initializeDB()
-end
+initializeDB()
 
 print("Killspeed tracker loaded")
 
@@ -63,15 +55,48 @@ end
 -- test
 local MyAddon = CreateFrame("Frame")
 MyAddon:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+MyAddon:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 MyAddon:SetScript("OnEvent", function(self, event, ...)
-    for i = 1, MAX_BOSS_FRAMES do
-        local guid = UnitGUID("boss"..i)
-        if guid then
-            -- Boss engaged
-            print("Encounter started with boss: " .. guid)
-            return
+    if event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
+        for i = 1, MAX_BOSS_FRAMES do
+            local guid = UnitGUID("boss"..i)
+            if guid then
+                -- Boss engaged
+                local _, _, _, instance_id, _, npc_id, _ = strsplit("-", guid)
+                print("Boss engaged: " ..guid)
+                print(instance_id, npc_id)
+                instance_id = tonumber(instance_id)
+                npc_id = tonumber(npc_id)
+                if not KillspeedTrackerDB[instance_id] then
+                    print("Instance not found")
+                    return
+                end
+                if not KillspeedTrackerDB[instance_id][npc_id] then
+                    print("Boss not found")
+                    return
+                end
+                print("Boss engaged: "..KillspeedTrackerDB[instance_id][npc_id])
+                return
+            end
+        end
+    elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        local _, subEvent, _, sourceGUID, sourceName, sourceFlags, _, destGUID, destName, destFlags, _, spellID, spellName = CombatLogGetCurrentEventInfo()
+        if subEvent == "UNIT_DIED" then
+            local _, _, _, instance_id, _, npc_id, _ = strsplit("-", destGUID)
+            instance_id = tonumber(instance_id)
+            npc_id = tonumber(npc_id)
+            if not KillspeedTrackerDB[instance_id] then
+                print("Instance not found")
+                return
+            end
+            if not KillspeedTrackerDB[instance_id][npc_id] then
+                print("Boss not found")
+                return
+            end
+            print("Boss died: "..KillspeedTrackerDB[instance_id][npc_id])
         end
     end
+    
 end)
 
 table.insert(UISpecialFrames, "KillspeedTrackerFrame")
