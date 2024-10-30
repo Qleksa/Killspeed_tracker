@@ -1,0 +1,8 @@
+## Interface: 40400
+## Title: Killspeed Tracker
+## Notes: Tracks your killspeed and displays it in a small movable window.
+## Author: Qleksa
+## Version: 1.0.0
+## SavedVariables: KillspeedTrackerDB
+
+core.lua
