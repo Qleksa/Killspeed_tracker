@@ -3,6 +3,9 @@
 
 -- KillspeedTrackerDB = KillspeedTrackerDB or {}
 
+-- You were defeated by 'Beth'tilac' after 3 minutes and 12 seconds.
+-- You were victorious against 'Beth'tilac' after 3 minutes and 12 seconds.
+
 local function initializeDB()
     KillspeedTrackerDB = {
         [720] = {
